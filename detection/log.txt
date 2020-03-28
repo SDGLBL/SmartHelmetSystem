@@ -1,0 +1,18 @@
+28-16-2020 22:16:20 numba.transforms:INFO:finding looplift candidates
+28-16-2020 22:16:32 __main__:INFO:检查dict_keys([])
+28-16-2020 22:16:44 __main__:INFO:检查dict_keys([])
+28-16-2020 22:16:56 __main__:INFO:检查dict_keys([])
+28-17-2020 22:17:09 __main__:INFO:检查dict_keys([])
+28-17-2020 22:17:22 __main__:INFO:检查dict_keys([])
+28-17-2020 22:17:34 __main__:INFO:检查dict_keys([])
+28-17-2020 22:17:46 __main__:INFO:检查dict_keys([])
+28-17-2020 22:17:58 __main__:INFO:检查dict_keys([5])
+28-18-2020 22:18:11 __main__:INFO:检查dict_keys([5])
+28-18-2020 22:18:23 __main__:INFO:检查dict_keys([5])
+28-18-2020 22:18:35 __main__:INFO:检查dict_keys([5])
+28-18-2020 22:18:48 __main__:INFO:检查dict_keys([5])
+28-18-2020 22:18:59 __main__:INFO:检查dict_keys([5])
+28-18-2020 22:18:59 __main__:INFO:死亡时间大于３秒5
+28-18-2020 22:18:59 __main__:INFO:5存活时间大于1秒dict_keys([5])
+28-18-2020 22:18:59 __main__:INFO:取出5放入数据库
+28-18-2020 22:18:59 __main__:INFO:Add a new record to db (1080, 1920, 3)
