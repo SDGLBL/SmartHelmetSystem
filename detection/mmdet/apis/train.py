@@ -7,10 +7,10 @@ import torch.distributed as dist
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import DistSamplerSeedHook, Runner
 
-from mmdet.core import (DistEvalHook, DistOptimizerHook, Fp16OptimizerHook,
+from detection.mmdet.core import (DistEvalHook, DistOptimizerHook, Fp16OptimizerHook,
                         build_optimizer)
-from mmdet.datasets import build_dataloader
-from mmdet.utils import get_root_logger
+from detection.mmdet.datasets import build_dataloader
+from detection.mmdet.utils import get_root_logger
 
 
 def set_random_seed(seed, deterministic=False):

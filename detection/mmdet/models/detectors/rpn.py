@@ -1,6 +1,6 @@
 import mmcv
 
-from mmdet.core import bbox_mapping, tensor2imgs
+from detection.mmdet.core import bbox_mapping, tensor2imgs
 from .. import builder
 from ..registry import DETECTORS
 from .base import BaseDetector

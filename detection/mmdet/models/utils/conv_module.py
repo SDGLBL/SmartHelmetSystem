@@ -3,7 +3,7 @@ import warnings
 import torch.nn as nn
 from mmcv.cnn import constant_init, kaiming_init
 
-from mmdet.ops import DeformConvPack, ModulatedDeformConvPack
+from detection.mmdet.ops import DeformConvPack, ModulatedDeformConvPack
 from .conv_ws import ConvWS2d
 from .norm import build_norm_layer
 

@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from mmdet.core import bbox2delta, bbox_overlaps, delta2bbox
+from detection.mmdet.core import bbox2delta, bbox_overlaps, delta2bbox
 from ..registry import HEADS
 from .retina_head import RetinaHead
 

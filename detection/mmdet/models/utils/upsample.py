@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import xavier_init
 
-from mmdet.ops.carafe import CARAFEPack
+from detection.mmdet.ops.carafe import CARAFEPack
 
 
 class PixelShufflePack(nn.Module):

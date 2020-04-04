@@ -5,8 +5,8 @@ import numpy as np
 import pycocotools.mask as maskUtils
 import torch.nn as nn
 
-from mmdet.core import auto_fp16, get_classes, tensor2imgs
-from mmdet.utils import print_log
+from detection.mmdet.core import auto_fp16, get_classes, tensor2imgs
+from detection.mmdet.utils import print_log
 
 
 class BaseDetector(nn.Module, metaclass=ABCMeta):

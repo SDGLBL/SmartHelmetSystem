@@ -5,7 +5,7 @@ CommandLine:
 import numpy as np
 import torch
 
-from mmdet.ops.nms.nms_wrapper import soft_nms
+from detection.mmdet.ops.nms.nms_wrapper import soft_nms
 
 
 def test_soft_nms_device_and_dtypes_cpu():

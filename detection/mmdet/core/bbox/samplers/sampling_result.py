@@ -1,13 +1,13 @@
 import torch
 
-from mmdet.utils import util_mixins
+from detection.mmdet.utils import util_mixins
 
 
 class SamplingResult(util_mixins.NiceRepr):
     """
     Example:
         >>> # xdoctest: +IGNORE_WANT
-        >>> from mmdet.core.bbox.samplers.sampling_result import *  # NOQA
+        >>> from detection.mmdet.core.bbox.samplers.sampling_result import *  # NOQA
         >>> self = SamplingResult.random(rng=10)
         >>> print('self = {}'.format(self))
         self = <SamplingResult({
@@ -109,13 +109,13 @@ class SamplingResult(util_mixins.NiceRepr):
             AssignResult :
 
         Example:
-            >>> from mmdet.core.bbox.samplers.sampling_result import *  # NOQA
+            >>> from detection.mmdet.core.bbox.samplers.sampling_result import *  # NOQA
             >>> self = SamplingResult.random()
             >>> print(self.__dict__)
         """
-        from mmdet.core.bbox.samplers.random_sampler import RandomSampler
-        from mmdet.core.bbox.assigners.assign_result import AssignResult
-        from mmdet.core.bbox import demodata
+        from detection.mmdet.core.bbox.samplers.random_sampler import RandomSampler
+        from detection.mmdet.core.bbox.assigners.assign_result import AssignResult
+        from detection.mmdet.core.bbox import demodata
         rng = demodata.ensure_rng(rng)
 
         # make probabalistic?

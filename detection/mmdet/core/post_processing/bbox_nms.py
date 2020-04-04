@@ -1,6 +1,6 @@
 import torch
 
-from mmdet.ops.nms import nms_wrapper
+from detection.mmdet.ops.nms import nms_wrapper
 
 
 def multiclass_nms(multi_bboxes,

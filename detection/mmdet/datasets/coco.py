@@ -7,8 +7,8 @@ import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-from mmdet.core import eval_recalls
-from mmdet.utils import print_log
+from detection.mmdet.core import eval_recalls
+from detection.mmdet.utils import print_log
 from .custom import CustomDataset
 from .registry import DATASETS
 

@@ -1,9 +1,9 @@
 import mmcv
 import torch
 
-from mmdet.core import build_assigner, build_sampler
-from mmdet.models.anchor_heads import AnchorHead
-from mmdet.models.bbox_heads import BBoxHead
+from detection.mmdet.core import build_assigner, build_sampler
+from detection.mmdet.models.anchor_heads import AnchorHead
+from detection.mmdet.models.bbox_heads import BBoxHead
 
 
 def test_anchor_head_loss():
@@ -302,8 +302,8 @@ def _demodata_refine_boxes(n_roi, n_img, rng=0):
     ``mmdet.models.bbox_heads.bbox_head.BBoxHead.refine_boxes`` method
     """
     import numpy as np
-    from mmdet.core.bbox.demodata import random_boxes
-    from mmdet.core.bbox.demodata import ensure_rng
+    from detection.mmdet.core.bbox.demodata import random_boxes
+    from detection.mmdet.core.bbox.demodata import ensure_rng
     try:
         import kwarray
     except ImportError:

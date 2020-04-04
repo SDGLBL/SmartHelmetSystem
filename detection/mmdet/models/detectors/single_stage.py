@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from mmdet.core import bbox2result
+from detection.mmdet.core import bbox2result
 from .. import builder
 from ..registry import DETECTORS
 from .base import BaseDetector

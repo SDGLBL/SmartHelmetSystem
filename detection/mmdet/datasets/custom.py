@@ -4,7 +4,7 @@ import mmcv
 import numpy as np
 from torch.utils.data import Dataset
 
-from mmdet.core import eval_map, eval_recalls
+from detection.mmdet.core import eval_map, eval_recalls
 from .pipelines import Compose
 from .registry import DATASETS
 

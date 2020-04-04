@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 class DistEvalHook(Hook):
 
     def __init__(self, dataset, interval=1, **eval_kwargs):
-        from mmdet import datasets
+        from detection.mmdet import datasets
         if isinstance(dataset, Dataset):
             self.dataset = dataset
         elif isinstance(dataset, dict):

@@ -5,8 +5,8 @@ import torch
 import torch.nn as nn
 from torch.nn.modules.utils import _pair
 
-from mmdet.core import auto_fp16, force_fp32, mask_target
-from mmdet.ops.carafe import CARAFEPack
+from detection.mmdet.core import auto_fp16, force_fp32, mask_target
+from detection.mmdet.ops.carafe import CARAFEPack
 from ..builder import build_loss
 from ..registry import HEADS
 from ..utils import ConvModule, build_upsample_layer

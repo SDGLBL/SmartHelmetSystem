@@ -3,8 +3,8 @@ from __future__ import division
 import torch
 import torch.nn as nn
 
-from mmdet import ops
-from mmdet.core import force_fp32
+from detection.mmdet import ops
+from detection.mmdet.core import force_fp32
 from ..registry import ROI_EXTRACTORS
 
 

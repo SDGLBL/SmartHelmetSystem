@@ -2,8 +2,8 @@ import torch.nn as nn
 from mmcv.cnn import constant_init, kaiming_init
 from mmcv.runner import load_checkpoint
 
-from mmdet.core import auto_fp16
-from mmdet.utils import get_root_logger
+from detection.mmdet.core import auto_fp16
+from detection.mmdet.utils import get_root_logger
 from ..backbones import ResNet, make_res_layer
 from ..registry import SHARED_HEADS
 

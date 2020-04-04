@@ -2,7 +2,7 @@ import inspect
 
 import torch
 
-from mmdet.utils import Registry
+from detection.mmdet.utils import Registry
 
 OPTIMIZERS = Registry('optimizer')
 

@@ -4,7 +4,8 @@ import torch.distributed as dist
 import torch.nn as nn
 from mmcv.cnn import normal_init
 
-from mmdet.core import (PseudoSampler, anchor_inside_flags, bbox2delta,
+
+from detection.mmdet.core import (PseudoSampler, anchor_inside_flags, bbox2delta,
                         build_assigner, delta2bbox, force_fp32,
                         images_to_levels, multi_apply, multiclass_nms, unmap)
 from ..builder import build_loss

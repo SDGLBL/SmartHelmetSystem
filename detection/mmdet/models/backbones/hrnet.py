@@ -3,7 +3,7 @@ from mmcv.cnn import constant_init, kaiming_init
 from mmcv.runner import load_checkpoint
 from torch.nn.modules.batchnorm import _BatchNorm
 
-from mmdet.utils import get_root_logger
+from detection.mmdet.utils import get_root_logger
 from ..registry import BACKBONES
 from ..utils import build_conv_layer, build_norm_layer
 from .resnet import BasicBlock, Bottleneck
@@ -212,7 +212,7 @@ class HRNet(nn.Module):
             in resblocks to let them behave as identity.
 
     Example:
-        >>> from mmdet.models import HRNet
+        >>> from detection.mmdet.models import HRNet
         >>> import torch
         >>> extra = dict(
         >>>     stage1=dict(

@@ -14,11 +14,11 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from robustness_eval import get_results
 
-from mmdet import datasets
-from mmdet.apis import set_random_seed
-from mmdet.core import eval_map, wrap_fp16_model
-from mmdet.datasets import build_dataloader, build_dataset
-from mmdet.models import build_detector
+from detection.mmdet import datasets
+from detection.mmdet.apis import set_random_seed
+from detection.mmdet.core import eval_map, wrap_fp16_model
+from detection.mmdet.datasets import build_dataloader, build_dataset
+from detection.mmdet.models import build_detector
 
 
 def coco_eval_with_return(result_files,

@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import kaiming_init
 
-from mmdet.core import auto_fp16, force_fp32
+from detection.mmdet.core import auto_fp16, force_fp32
 from ..registry import HEADS
 from ..utils import ConvModule
 

@@ -21,7 +21,7 @@ def test_config_build_detector():
     Test that all detection models defined in the configs can be initialized.
     """
     from xdoctest.utils import import_module_from_path
-    from mmdet.models import build_detector
+    from detection.mmdet.models import build_detector
 
     config_dpath = _get_config_directory()
     print('Found config_dpath = {!r}'.format(config_dpath))

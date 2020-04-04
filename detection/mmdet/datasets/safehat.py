@@ -1,6 +1,6 @@
 from .registry import DATASETS
 from .xml_style import XMLDataset
-from mmdet.core import eval_map, eval_recalls
+from detection.mmdet.core import eval_map, eval_recalls
 # 注册安全帽数据集
 from ..core import print_map_summary
 import numpy as np

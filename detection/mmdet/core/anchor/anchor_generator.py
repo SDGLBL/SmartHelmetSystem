@@ -4,7 +4,7 @@ import torch
 class AnchorGenerator(object):
     """
     Examples:
-        >>> from mmdet.core import AnchorGenerator
+        >>> from detection.mmdet.core import AnchorGenerator
         >>> self = AnchorGenerator(9, [1.], [1.])
         >>> all_anchors = self.grid_anchors((2, 2), device='cpu')
         >>> print(all_anchors)

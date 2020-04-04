@@ -9,9 +9,9 @@ from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
 from mmcv.visualization import color_val
 import cv2
-from mmdet.core import get_classes
-from mmdet.datasets.pipelines import Compose
-from mmdet.models import build_detector
+from ..core import get_classes
+from ..datasets.pipelines import Compose
+from ..models import build_detector
 
 
 def init_detector(config, checkpoint=None, device='cuda:0'):

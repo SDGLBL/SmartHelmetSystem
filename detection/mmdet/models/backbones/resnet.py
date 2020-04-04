@@ -4,9 +4,9 @@ from mmcv.cnn import constant_init, kaiming_init
 from mmcv.runner import load_checkpoint
 from torch.nn.modules.batchnorm import _BatchNorm
 
-from mmdet.models.plugins import GeneralizedAttention
-from mmdet.ops import ContextBlock
-from mmdet.utils import get_root_logger
+from detection.mmdet.models.plugins import GeneralizedAttention
+from detection.mmdet.ops import ContextBlock
+from detection.mmdet.utils import get_root_logger
 from ..registry import BACKBONES
 from ..utils import build_conv_layer, build_norm_layer
 
@@ -329,7 +329,7 @@ class ResNet(nn.Module):
             in resblocks to let them behave as identity.
 
     Example:
-        >>> from mmdet.models import ResNet
+        >>> from detection.mmdet.models import ResNet
         >>> import torch
         >>> self = ResNet(depth=18)
         >>> self.eval()

@@ -8,7 +8,10 @@ import math
 import time
 import pickle 
 import argparse
+import datetime
 import logging
+import queue
+import threading
 import asyncio
 import motor
 import numpy as np
@@ -18,9 +21,11 @@ from db import get_collection
 from cv2 import VideoWriter_fourcc
 from pymongo import MongoClient
 from bson.binary import Binary 
-from tracker import Tracker,track
+from tracker import Tracker,track,over_step_video,fill,draw_label,imgs_detection
 from mmcv.visualization import color_val
 from detection.mmdet.apis import init_detector, inference_detector, show_result_pyplot,get_result
+
+
 
 
 
@@ -39,15 +44,27 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def write_frame(vwriter):
+    while True:
+        try:
+            imgs = Img_Q.get(timeout=5)
+            for img in imgs:
+                vwriter.write(img)
+        except:
+            print('写入结束')
+            return
+
 
 def process_video(
     model,
+    thre,
     input_path,
     output_path,
     require_fps,
     hat_color,
     person_color,
-    fourcc='mp4v'
+    fourcc='mp4v',
+    step=3,
     ):
     """处理视频并输出到指定目录
     
@@ -59,10 +76,14 @@ def process_video(
         hat_color {[str]} -- [安全帽框颜色]
         person_color {[str]} -- [人头框颜色]
         process_step {[int]} -- [以step分钟的间隔处理整个视频，内存越大step可以越大]
+        over_step {[int]} -- [跳步检查，默认为１则隔一帧检测一帧]
     """    
-    video = mmcv.VideoReader(input_path)
-    # 初始化人头追踪器
+    video = mmcv.VideoReader(input_path,cache_capacity=40)
+    # 初始化person人头追踪器
     psn_tracker = Tracker()
+    # 初始化hat人头追踪器
+    hat_tarcker = Tracker()
+    # 图像分辨率
     resolution = (video.width, video.height)
     video_fps = video.fps
     #ds = DetectionSifter(int(video_fps),osp.basename(args.input_path).split('.')[0],1,3,resolution,get_collection())
@@ -76,27 +97,41 @@ def process_video(
         require_fps,
         resolution
         )
-    for frame in tqdm(video):
+    t = threading.Thread(target=write_frame,args=(vwriter,))
+    t.start()
+    #　跳步视频（每次读取step+1帧）
+    #video = over_step_video(video,step)
+    indexs = np.arange(len(video))[0:len(video):step]
+    for start_index in tqdm(indexs):
+        origin_frames = video[start_index:start_index+step]
+        origin_frames = np.array(origin_frames)
         # bbox:(hat_bbox,person_bbox)
-        st = time.time()
-        bboxs = inference_detector(model, frame)
-        et = time.time()
-        Loger.info('探测耗时{0}'.format(et - st))
-        frame_result = get_result(
-                frame,
-                bboxs,
-                class_names=model.CLASSES,
-                auto_thickness=True,
-                color_dist={'hat':'green','person':'red'}
-                )
-        # person_bboxs:(N,5)
-        person_bboxs = bboxs[1]
-        # 筛选阈值大于0.5进行追踪
-        person_bboxs = person_bboxs[person_bboxs[:,4] > 0.5]
-        person_bboxs = np.expand_dims(person_bboxs,0)
-        person_bboxs_tracks = track(person_bboxs,psn_tracker)[0]
+        # 首先跳帧探测
+        frames_index,hat_bboxs,person_bboxs = imgs_detection(origin_frames,model,thre,step-1)
+        # hat_bboxs [frame_index,obejct_index,point+score]
+        person_bboxs_tracks = track(person_bboxs,psn_tracker)
+        hat_bboxs_tracks = track(hat_bboxs,hat_tarcker)
+        # 开始抽帧填充
+        person_frams_index,person_bboxs = fill(person_bboxs_tracks,frames_index)
+        hat_frams_index,hat_bboxs = fill(hat_bboxs_tracks,frames_index)
+
+        #　绘制图像
+        origin_frames = draw_label(
+            origin_frames,
+            person_bboxs,
+            'No Wear Helmet',
+            color_val(person_color),
+            color_val(person_color))
+        origin_frames = draw_label(
+            origin_frames,
+            hat_bboxs,
+            'Wear Helmet',
+            color_val(hat_color),
+            color_val(hat_color))
+        
+        Img_Q.put(origin_frames)
         #ds.add_object(person_bboxs_tracks,frame)
-        vwriter.write(frame_result)
+        
     #ds.clear()
     print('process finshed')
 
@@ -283,8 +318,10 @@ if __name__ == "__main__":
         raise ValueError('input_path can not be None')
     model = init_detector(args.config, args.checkpoints, device='cuda:0')
     Loger = get_logger()
+    Img_Q = queue.Queue(100)
     process_video(
         model,
+        args.thre,
         args.input_path,
         args.output_path,
         args.fps,

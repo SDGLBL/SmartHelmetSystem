@@ -1,4 +1,4 @@
-from mmdet.utils import Registry
+from detection.mmdet.utils import Registry
 
 BACKBONES = Registry('backbone')
 NECKS = Registry('neck')

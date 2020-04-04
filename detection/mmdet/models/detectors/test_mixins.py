@@ -3,13 +3,13 @@ import sys
 
 import torch
 
-from mmdet.core import (bbox2roi, bbox_mapping, merge_aug_bboxes,
+from detection.mmdet.core import (bbox2roi, bbox_mapping, merge_aug_bboxes,
                         merge_aug_masks, merge_aug_proposals, multiclass_nms)
 
 logger = logging.getLogger(__name__)
 
 if sys.version_info >= (3, 7):
-    from mmdet.utils.contextmanagers import completed
+    from detection.mmdet.utils.contextmanagers import completed
 
 
 class RPNTestMixin(object):

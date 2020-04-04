@@ -10,11 +10,11 @@ import torch
 from mmcv import Config
 from mmcv.runner import init_dist
 
-from mmdet import __version__
-from mmdet.apis import set_random_seed, train_detector
-from mmdet.datasets import build_dataset
-from mmdet.models import build_detector
-from mmdet.utils import collect_env, get_root_logger
+from detection.mmdet import __version__
+from detection.mmdet.apis import set_random_seed, train_detector
+from detection.mmdet.datasets import build_dataset
+from detection.mmdet.models import build_detector
+from detection.mmdet.utils import collect_env, get_root_logger
 
 
 def parse_args():

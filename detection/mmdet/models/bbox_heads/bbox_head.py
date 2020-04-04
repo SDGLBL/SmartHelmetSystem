@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.utils import _pair
 
-from mmdet.core import (auto_fp16, bbox_target, delta2bbox, force_fp32,
+from detection.mmdet.core import (auto_fp16, bbox_target, delta2bbox, force_fp32,
                         multiclass_nms)
 from ..builder import build_loss
 from ..losses import accuracy
@@ -193,7 +193,7 @@ class BBoxHead(nn.Module):
             >>> # xdoctest: +REQUIRES(module:kwarray)
             >>> import kwarray
             >>> import numpy as np
-            >>> from mmdet.core.bbox.demodata import random_boxes
+            >>> from detection.mmdet.core.bbox.demodata import random_boxes
             >>> self = BBoxHead(reg_class_agnostic=True)
             >>> n_roi = 2
             >>> n_img = 4

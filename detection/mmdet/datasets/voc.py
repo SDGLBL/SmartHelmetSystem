@@ -1,4 +1,4 @@
-from mmdet.core import eval_map, eval_recalls
+from detection.mmdet.core import eval_map, eval_recalls
 from .registry import DATASETS
 from .xml_style import XMLDataset
 

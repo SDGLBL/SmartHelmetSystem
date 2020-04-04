@@ -3,7 +3,7 @@ from __future__ import division
 import torch
 import torch.nn as nn
 
-from mmdet.core import (bbox2result, bbox2roi, bbox_mapping, build_assigner,
+from detection.mmdet.core import (bbox2result, bbox2roi, bbox_mapping, build_assigner,
                         build_sampler, merge_aug_bboxes, merge_aug_masks,
                         multiclass_nms)
 from .. import builder

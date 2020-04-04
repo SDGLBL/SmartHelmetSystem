@@ -11,7 +11,6 @@ import glob
 import time
 import argparse
 from filterpy.kalman import KalmanFilter
-plt.switch_backend('agg')
 
 # 计算IOU
 @jit
@@ -29,6 +28,8 @@ def iou(bb_test,bb_gt):
   o = wh / ((bb_test[2]-bb_test[0])*(bb_test[3]-bb_test[1])
     + (bb_gt[2]-bb_gt[0])*(bb_gt[3]-bb_gt[1]) - wh)
   return(o)
+
+
 # 两种表示方式之间的转换只(x1,y1,x2,y2)到(x,y,r,s)
 def convert_bbox_to_z(bbox):
   """
@@ -43,6 +44,8 @@ def convert_bbox_to_z(bbox):
   s = w*h    #scale is just area
   r = w/float(h)
   return np.array([x,y,s,r]).reshape((4,1))
+
+
 # 两种表示方式之间的转换只(x,y,r,s)到(x1,y1,x2,y2)
 def convert_x_to_bbox(x,score=None):
   """
@@ -222,12 +225,18 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-# 矩形框跟踪
-# bboxs：矩形框数组
-# tracker: 跟踪器，默认为类中自带跟踪器
-# return：tracker_bboxs：跟踪后的矩形框数组
-@jit
+
+
 def track(bboxs, tracker):
+    """矩形框跟踪
+    
+    Args:
+        bboxs ([type]): 矩形框数组
+        tracker ([type]): 跟踪器，默认为类中自带跟踪器
+    
+    Returns:
+        tracker_bboxs[type]: 跟踪后的矩形框数组
+    """  
     tracker_bboxs = [tracker.update(bbox) for bbox in bboxs]
     return tracker_bboxs
 

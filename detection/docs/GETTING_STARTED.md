@@ -100,7 +100,7 @@ python demo/webcam_demo.py configs/faster_rcnn_r50_fpn_1x.py \
 Here is an example of building the model and test given images.
 
 ```python
-from mmdet.apis import init_detector, inference_detector, show_result
+from detection.mmdet.apis import init_detector, inference_detector, show_result
 import mmcv
 
 config_file = 'configs/faster_rcnn_r50_fpn_1x.py'
@@ -135,8 +135,8 @@ See `tests/async_benchmark.py` to compare the speed of synchronous and asynchron
 ```python
 import asyncio
 import torch
-from mmdet.apis import init_detector, async_inference_detector, show_result
-from mmdet.utils.contextmanagers import concurrent
+from detection.mmdet.apis import init_detector, async_inference_detector, show_result
+from detection.mmdet.utils.contextmanagers import concurrent
 
 async def main():
     config_file = 'configs/faster_rcnn_r50_fpn_1x.py'

@@ -11,7 +11,7 @@ class RandomSampler(BaseSampler):
                  neg_pos_ub=-1,
                  add_gt_as_proposals=True,
                  **kwargs):
-        from mmdet.core.bbox import demodata
+        from detection.mmdet.core.bbox import demodata
         super(RandomSampler, self).__init__(num, pos_fraction, neg_pos_ub,
                                             add_gt_as_proposals)
         self.rng = demodata.ensure_rng(kwargs.get('rng', None))

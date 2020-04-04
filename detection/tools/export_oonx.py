@@ -1,20 +1,19 @@
 import argparse
 
+import torch
 from mmcv import Config
+from mmcv.runner import load_checkpoint
 
 from detection.mmdet.models import build_detector
-from detection.mmdet.utils import get_model_complexity_info
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
     parser.add_argument('config', help='train config file path')
+    parser.add_argument('out', help='output ONNX file')
+    parser.add_argument('--checkpoint', help='checkpoint file of the model')
     parser.add_argument(
-        '--shape',
-        type=int,
-        nargs='+',
-        default=[1280, 800],
-        help='input image size')
+        '--shape', type=int, nargs='+', default=[800], help='input image size')
     args = parser.parse_args()
     return args
 
@@ -24,31 +23,30 @@ def main():
     args = parse_args()
 
     if len(args.shape) == 1:
-        input_shape = (3, args.shape[0], args.shape[0])
+        img_shape = (1, 3, args.shape[0], args.shape[0])
     elif len(args.shape) == 2:
-        input_shape = (3, ) + tuple(args.shape)
+        img_shape = (1, 3) + tuple(args.shape)
+    elif len(args.shape) == 4:
+        img_shape = tuple(args.shape)
     else:
         raise ValueError('invalid input shape')
+    dummy_input = torch.randn(*img_shape, device='cuda')
 
     cfg = Config.fromfile(args.config)
     model = build_detector(
         cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg).cuda()
-    model.eval()
+    print(args.checkpoint)
+    if args.checkpoint:
+        _ = load_checkpoint(model, args.checkpoint)
 
     if hasattr(model, 'forward_dummy'):
         model.forward = model.forward_dummy
     else:
         raise NotImplementedError(
-            'FLOPs counter is currently not currently supported with {}'.
+            'ONNX exporting is currently not currently supported with {}'.
             format(model.__class__.__name__))
 
-    flops, params = get_model_complexity_info(model, input_shape)
-    split_line = '=' * 30
-    print('{0}\nInput shape: {1}\nFlops: {2}\nParams: {3}\n{0}'.format(
-        split_line, input_shape, flops, params))
-    print('!!!Please be cautious if you use the results in papers. '
-          'You may need to check if all ops are supported and verify that the '
-          'flops computation is correct.')
+    torch.onnx.export(model, dummy_input, args.out, verbose=True)
 
 
 if __name__ == '__main__':

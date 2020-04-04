@@ -11,9 +11,9 @@ import torch.distributed as dist
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import get_dist_info, init_dist, load_checkpoint
 
-from mmdet.core import wrap_fp16_model
-from mmdet.datasets import build_dataloader, build_dataset
-from mmdet.models import build_detector
+from detection.mmdet.core import wrap_fp16_model
+from detection.mmdet.datasets import build_dataloader, build_dataset
+from detection.mmdet.models import build_detector
 
 
 def single_gpu_test(model, data_loader, show=False):

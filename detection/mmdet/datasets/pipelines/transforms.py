@@ -6,7 +6,7 @@ from numpy import random
 from PIL import Image
 from PIL.JpegImagePlugin import JpegImageFile
 from torchvision import transforms
-from mmdet.core.evaluation.bbox_overlaps import bbox_overlaps
+from detection.mmdet.core.evaluation.bbox_overlaps import bbox_overlaps
 from ..registry import PIPELINES
 
 try:
