@@ -1,0 +1,18 @@
+12-29-2020 00:29:08 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:12 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:17 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:21 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:26 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:31 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:35 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:40 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:45 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:49 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:54 utils.loger:INFO:检查缓冲区
+12-29-2020 00:29:59 utils.loger:INFO:检查缓冲区
+12-30-2020 00:30:04 utils.loger:INFO:检查缓冲区
+12-30-2020 00:30:08 utils.loger:INFO:检查缓冲区
+12-30-2020 00:30:08 utils.loger:INFO:死亡时间大于３秒8
+12-30-2020 00:30:08 utils.loger:INFO:8存活时间大于1秒dict_keys([8])
+12-30-2020 00:30:08 utils.loger:INFO:取出8放入数据库
+12-30-2020 00:30:08 utils.loger:INFO:Add a new record to db (1080, 1920, 3)

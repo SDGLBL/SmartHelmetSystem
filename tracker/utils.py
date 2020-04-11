@@ -7,6 +7,16 @@ from mmcv import VideoReader
 import numpy as np
 
 
+def img_detection(img, model,thre):
+    result = inference_detector(model,img)
+    hat_bbox,person_bbox = result[0],result[1]
+    # 剔除分数过低的bbox
+    hat_bbox,person_bbox = hat_bbox[hat_bbox[:,4] > thre],person_bbox[person_bbox[:,4]>thre]
+    # 将阈值数据抹除
+    hat_bbox = hat_bbox[:,0:4]
+    person_bbox = person_bbox[:,0:4]
+    return (hat_bbox,person_bbox)
+
 def imgs_detection(imgs, model,thre, step=1):
     """图片组识别
     
@@ -130,7 +140,7 @@ def fill(bbox_ids, farmes):
     new_farmes = []
     if len(bbox_ids) == 0:
         return new_farmes, new_bbox_ids
-    farme_count = 0
+    farme_count = farmes[0]
     for i in range(len(bbox_ids)-1):
         # 将原来的第i帧放入新的bboxs框组中
         new_bbox_ids.append(bbox_ids[i])
