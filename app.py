@@ -1,15 +1,10 @@
 from flask import Flask, render_template,request
-from flask_wtf import FlaskForm
-from wtforms import StringField,PasswordField,SubmitField
-from  wtforms import validators
 from flask import jsonify
 from flask_cors import *
-import json
 from datetime import *
-from loginFile import *
-from queryFile import *
-from queryFile import *
-from insertFile import *
+from utils.loginFile import *
+from utils.queryFile import *
+from utils.insertFile import *
 
 app = Flask(__name__,static_url_path="")
 CORS(app, supports_credentials=True)
