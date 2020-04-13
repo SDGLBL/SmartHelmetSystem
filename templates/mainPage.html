@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="http://code.jquery.com/jquery-latest.js" ></script>
+
+</head>
+<body>
+    <a href="http://127.0.0.1:5000/login"> 登录</a>
+    <button onclick="tsPost()">测试Post</button>
+    <input type="text" id="tx" value="输入">
+    <img  id="myImg">
+<br>
+<video src="http://127.0.0.1:5000/video/2020-04-01.mp4" width="100%"  controls="controls" type='video/mp4;codecs="mp4v.20.8,mp4a.40.2"'>
+
+</video>
+</body>
+<script>
+    function tsPost(){
+        //
+        $.ajax({
+            //请求方式
+            type : "POST",
+            //请求的媒体类型
+            contentType: "application/json;charset=UTF-8",
+            //请求地址
+            url : "http://127.0.0.1:5000/testPost",
+            //数据，json字符串
+            data :{'name':$('#tx').val()} ,
+            dataType:'json',
+            //请求成功
+            success : function(result) {
+                console.log(result);
+                {#$('#myImg').src=result['url'];#}
+
+                alert(result['url']);
+
+
+                document.getElementById("myImg").setAttribute("src",result['url']);
+            },
+            //请求失败，包含具体的错误信息
+            error : function(e){
+                console.log(e.status);
+                console.log(e.responseText);
+                alert('失败')
+            }
+        });
+    }
+
+    function test() {
+        var tx=$('#tx').val();
+        alert(tx);
+
+    }
+</script>
+</html>
