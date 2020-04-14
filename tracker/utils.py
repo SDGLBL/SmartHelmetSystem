@@ -254,7 +254,7 @@ class DetectionSifter(object):
         connection,
         alive_thr=1,
         dead_thr=3,
-        img_save_p='~/img_data'):
+        img_save_p='./static/pic'):
         assert isinstance(fps,int)
         assert isinstance(video_name,str)
         assert isinstance(alive_thr,(int,float))
@@ -278,7 +278,7 @@ class DetectionSifter(object):
         self.center = (resolution[0] // 2,resolution[1] // 2)
         # 矩形框粗细大小
         self.thickness = (resolution[0] + resolution[1]) // 600
-        self.img_save_p = osp.expanduser(img_save_p)
+        # self.img_save_p = osp.expanduser(img_save_p)
         if not osp.exists(self.img_save_p):
             os.mkdir(self.img_save_p)
     def add_object(self,bboxs,img,index):
