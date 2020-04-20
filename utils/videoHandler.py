@@ -178,6 +178,7 @@ class VideoHandler(object):
             end_index = start_index + step + 1
             if end_index >= vlen:
                 break
+
             origin_frames = video[start_index:end_index]
             origin_frames = np.array(origin_frames)
             #
