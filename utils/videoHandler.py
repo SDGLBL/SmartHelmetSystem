@@ -26,7 +26,6 @@ class VideoHandler(object):
     _instant = None
     _videoList=[]   #任务列表，里面存放视频的名字
     _isWork=False   #是否正在工作
-    _Img_Q = queue.Queue(100)  #图像队列
     _outPutFps=30;
     _hatColor="green"
     _personColor="red"
@@ -89,6 +88,7 @@ class VideoHandler(object):
             self._isWork=False
             return
         while True:
+
             #如果任务列表已经为空，则退出线程
             if len(self._videoList)==0:
                 break
@@ -143,6 +143,9 @@ class VideoHandler(object):
             hat_color {[str]} -- [安全帽框颜色]
             person_color {[str]} -- [人头框颜色]
         """
+        startTime = datetime.now()
+        #创建图像缓冲队列
+        Img_Q = queue.Queue(100)
         video = mmcv.VideoReader(input_path, cache_capacity=40)
         # 图像分辨率
         resolution = (video.width, video.height)
@@ -165,7 +168,7 @@ class VideoHandler(object):
             require_fps,
             resolution
         )
-        t = threading.Thread(target=self._write_frame, args=(vwriter,))
+        t = threading.Thread(target=self._write_frame, args=(vwriter,Img_Q,))
         t.start()
         # 　跳步视频（每次读取step+1帧）
         # video = over_step_video(video,step)
@@ -178,7 +181,6 @@ class VideoHandler(object):
             end_index = start_index + step + 1
             if end_index >= vlen:
                 break
-
             origin_frames = video[start_index:end_index]
             origin_frames = np.array(origin_frames)
             #
@@ -186,9 +188,12 @@ class VideoHandler(object):
             origin_frames, psn_objects, hat_objects = p.get_img(origin_frames, frames_index)
             for psn_o in psn_objects:
                 ds.add_object(*psn_o)
-            self._Img_Q.put(origin_frames[:-1])
+            Img_Q.put(origin_frames[:-1])
         ds.clear()
         print('process finshed')
+        endTime=datetime.now()
+        print("开始时间:{0},结束时间:{1}".format(startTime,endTime))
+        print("总共耗时：{0}".format((endTime-startTime).seconds))
     """
     内部接口,获取数据库中，某天的视频的数量
     """
@@ -203,11 +208,11 @@ class VideoHandler(object):
     """
     内部接口，将图片队列里面的图片写入到视频文件中，多线程调用
     """
-    def _write_frame(self,vwriter):
+    def _write_frame(self,vwriter,Img_Q):
         count =0
         while True:
             try:
-                imgs = self._Img_Q.get(timeout=5)
+                imgs = Img_Q.get(timeout=5)
                 for img in imgs:
                     count+=1
                     vwriter.write(img)
