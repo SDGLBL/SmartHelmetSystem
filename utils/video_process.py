@@ -1,7 +1,7 @@
 from mmcv import VideoReader,color_val
 from tracker import Tracker,img_detection,track,fill,draw_label1,DetectionSifter
 import numpy as np
-
+import copy
 class Process(object):
     def __init__(
         self,
@@ -78,21 +78,22 @@ class Process(object):
         hat_bboxs_index,all_hat_bbox_ids = fill(hat_bboxs_ids,fl_indexs)
         # 将探测到的目标数据传入打包为objects
         psn_objects = [
-            (all_psn_bbox_ids[bindex],all_psn_bbox_ids[bindex],psn_bboxs_index[bindex]) 
+            (all_psn_bbox_ids[bindex],imgs[bindex],psn_bboxs_index[bindex]) 
             for bindex in range(len(psn_bboxs_index)-1)]
         hat_objects = [
-            (all_hat_bbox_ids[bindex],all_hat_bbox_ids[bindex],hat_bboxs_index[bindex]) 
+            (all_hat_bbox_ids[bindex],imgs[bindex],hat_bboxs_index[bindex]) 
             for bindex in range(len(hat_bboxs_index)-1)]
+        origin_frames = copy.deepcopy(imgs)
         # 绘制目标探测图像
         origin_frames = draw_label1(
-            imgs,
+            origin_frames,
             all_psn_bbox_ids,
             lperson_bbox_pro,
             "no wear helmet",
             color_val(self.person_color),
             color_val(self.person_color))
         origin_frames = draw_label1(
-            imgs,
+            origin_frames,
             all_hat_bbox_ids,
             lhat_bbox_pro,
             'wear helmet',

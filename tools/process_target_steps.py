@@ -21,7 +21,7 @@ from bson.binary import Binary
 from tracker import Tracker,track,over_step_video,fill,draw_label,imgs_detection,img_detection,DetectionSifter
 from mmcv.visualization import color_val
 from detection.mmdet.apis import init_detector, inference_detector, show_result_pyplot,get_result
-
+from utils.loginFile import Login
 
 
 
@@ -82,7 +82,7 @@ def process_video(
         int(video_fps),
         osp.basename(args.i).split('.')[0],
         resolution,
-        get_collection()
+        Login('data', 'picAboutNotWearHat')
         )
     if require_fps is None:
         require_fps = video_fps

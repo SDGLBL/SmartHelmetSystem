@@ -279,6 +279,7 @@ class DetectionSifter(object):
         # 矩形框粗细大小
         self.thickness = (resolution[0] + resolution[1]) // 600
         # self.img_save_p = osp.expanduser(img_save_p)
+        self.img_save_p = img_save_p
         if not osp.exists(self.img_save_p):
             os.mkdir(self.img_save_p)
     def add_object(self,bboxs,img,index):

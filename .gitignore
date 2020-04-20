@@ -20,11 +20,13 @@ parts/
 sdist/
 var/
 wheels/
+test.py
+testMongodb.py
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
-
+static/
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -117,6 +119,8 @@ weights/
 hat_test/
 *.mp4
 *.ipynb
+static/
+
 
 # Pytorch
 *.pth

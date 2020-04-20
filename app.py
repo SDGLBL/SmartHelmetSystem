@@ -2,13 +2,27 @@ from flask import Flask, render_template,request
 from flask import jsonify
 from flask_cors import *
 from datetime import *
+import time
+import queue
+from utils import get_logger
 from utils.loginFile import *
 from utils.queryFile import *
 from utils.insertFile import *
+from flask_socketio import SocketIO
+from geventwebsocket.handler import WebSocketHandler         #提供WS（websocket）协议处理
+from geventwebsocket.server import WSGIServer                #websocket服务承载
+#WSGIServer导入的就是gevent.pywsgi中的类
+from gevent.pywsgi import WSGIServer
+from flask import Flask, request,make_response,render_template, redirect, url_for
+from werkzeug.utils import secure_filename
+from os import path
+from geventwebsocket.websocket import WebSocket
+import _thread
 
 app = Flask(__name__,static_url_path="")
-CORS(app, supports_credentials=True)
+#CORS(app, supports_credentials=True)
 app.secret_key='djf'
+socketio = SocketIO(app)
 
 #资源访
 sourcesHost= 'http://data.webbanc.xyz:8080'
@@ -32,8 +46,33 @@ def TestPost():
         name=request.values.get("name")
         print(name)
         return jsonify({"url":"http://192.168.3.28:5000/tiger.jpg"})
+#上传文件
+@app.route("/uploadVideos",methods=['GET','POST'])
+def upload():
+    if request.method=='POST':
+        f = request.files["file"]
+        base_path = path.abspath(path.dirname(__file__))
+        upload_path = path.join(base_path,'static/uploads/')
+        file_name = upload_path + secure_filename(f.filename)
+        f.save(file_name)
+        return redirect(url_for('upload'))
+    else:
+        return "失败"
+#连接客户端的socket
+@app.route('/connect',methods=['GET','POST'])
+def connectSocket():
+    client_socket = request.environ.get('wsgi.websocket')
+    if not client_socket:
+        print("没有连接socket")
+    else:
+        print("连接socket成功")
+    #time.sleep(5)
+    print("准备通知前端更新")
+    client_socket.send(json.dumps("连接成功"))
+    return "ok"
 
-#返回视频数据
+
+#返回视频、截图数据
 @app.route('/grabVideoData',methods=['GET','POST'])
 def getVideoData():
     print("连接成功,准备回传视频数据"+request.method)
@@ -56,46 +95,24 @@ def getVideoData():
             img=ImgInfo(idx_img,result['time'],getImgUrl(result['info']['img']))
             #将图片信息加入的列表中
             imgInfos.append(img.__dict__)
-            # imgInfos.append({"idx":idx_img,
-            #                  "title":result['time'],
-            #                  "url":getImgUrl(result['info']['img'])})
+
             idx_img=idx_img+1
         #创建视频信息
         videoInfom=VideoInfom(idx_video,videoName,getVideoUrl(videoName),imgInfos)
         #将视频信息加入列表
         videoInfos.append(videoInfom.__dict__)
-        # videoInfos.append({"index":idx_video,
-        #                    "tilte":videoName,
-        #                    "videoURL":getVideoUrl(videoName),
-        #                    "imgs":imgInfos})
+
         idx_video=idx_video+1
     print("视频数据"+json.dumps(videoInfos))
     return  json.dumps(videoInfos)
 #返回统计表格数据
 @app.route('/grabDiagramData',methods=['GET','POST'])
 def getDiagramData():
-    print("连接成功，准备回传统计数据")
-    #连接数据库
-    mycolImageNumber = Login('data', 'imageNumber')
-    imagesNum = int(queryAboutImageNum(mycolImageNumber)[0]['number'])  # 获取初始名称
-    mycolDatabase = Login('data', 'picAboutNotWearHat')
-    idx=0
-    diagramDataList=[]
-    #获取所有日期
-    allTimes=queryAllTime(mycolDatabase)
-    for time in allTimes:
-        timeStrs=time.split('-')
-        results=queryAboutDay(mycolDatabase,int(timeStrs[0]),int(timeStrs[1]),int(timeStrs[2]))
-        #创建统计数据
-        diagramDataList.append({"index":idx,
-                                "date":time,
-                                "totalBreak":len(results)})
-        idx=idx+1
-    diagramDataList.append({"index":1,
-                                "date":"2020-04-02",
-                                "totalBreak":40})
-    print("统计数据："+json.dumps(diagramDataList))
-    return json.dumps(diagramDataList)
+
+    allDiagramData=getAllDiagramData()
+    print(allDiagramData)
+    return json.dumps(getAllDiagramData())
+
 
 
 #返回所有视频的名字
@@ -120,20 +137,12 @@ def getAllDiagramData():
     mycolDatabase = Login('data', 'picAboutNotWearHat')
     #获取起始和末尾的时间
     timeList=queryAllTime(mycolDatabase)
-    startTime=timeList[0]
-    endTime=timeList[len(timeList)-1]
-
-    startTimeStrs=startTime.split("-")
-    endTimeStrs=endTime.split("-")
-
-    startDate=datetime(int(startTimeStrs[0]),int(startTimeStrs[1]),int(startTimeStrs[2]))
-    endDate=datetime(int(endTimeStrs[0]),int(endTimeStrs[1]),int(endTimeStrs[2]))
-    #endDate=datetime(2020,4,2)
-    currentDate=datetime(int(startTimeStrs[0]),int(startTimeStrs[1]),int(startTimeStrs[2]))
 
     diagramDatas_day=[]
     idx_day=0
-    while(currentDate<=endDate):
+    for timeStr in timeList:
+        timeStrs=timeStr.split("-")
+        currentDate = datetime(int(timeStrs[0]), int(timeStrs[1]), int(timeStrs[2]))
         result_days=queryAboutDay(mycolDatabase,currentDate.year,currentDate.month,currentDate.day)
         #一天违规的次数
         totalBreak_day=-1;
@@ -154,7 +163,6 @@ def getAllDiagramData():
                                  "totalBreak":totalBreak_day,
                                  "hours":diagramDatas_hour})
         idx_day=idx_day+1
-        currentDate=currentDate+timedelta(days=1)
     return diagramDatas_day
 
 #存放视频信息，包括视频名字、路径、所包含的图片的信息
@@ -179,36 +187,9 @@ class DiagramData(object):
         self.data=date
         self.totalBreak=totalBreak
 
-
 if __name__ == '__main__':
-
-
-    print(getAllDiagramData())
-    app.run()
-    jsonify([{"index":0,
-              "date":"2020-04-01",
-              "totalBreak":28,
-              "hours":[{"idx":"1",
-                        "totalBreak":15},
-                       {"idx":"2",
-                        "totalBreak":-1},
-                       {"idx":"3",
-                        "totalBreak":13}]},
-             {"index": 1,
-              "date": "2020-04-02",
-              "totalBreak":-1,
-              "hours": [{"idx": "1",
-                         "totalBreak": -1},
-                        {"idx": "2",
-                         "totalBreak": -1},
-                        {"idx": "3",
-                         "totalBreak": -1}]},
-             {"index": 2,
-              "date": "2020-04-03",
-              "totalBreak":48,
-              "hours": [{"idx": "1",
-                         "totalBreak": 15},
-                        {"idx": "2",
-                         "totalBreak": 16},
-                        {"idx": "3",
-                         "totalBreak": 17}]}])
+    # _thread.start_new_thread(hello, (), {})
+    Loger = get_logger()
+    Img_Q = queue.Queue(100)
+    http_server = WSGIServer(('127.0.0.1', 5000), application=app, handler_class=WebSocketHandler)
+    http_server.serve_forever()
