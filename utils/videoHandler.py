@@ -12,7 +12,7 @@ from tqdm import tqdm
 import mmcv
 from utils import get_logger,Process
 from utils.loginFile import Login
-from utils.neuralNetworkModel import *
+from utils.neuralNetworkModelManager import *
 import  json
 from detection import init_detector
 
@@ -30,6 +30,8 @@ class VideoHandler(object):
     _personColor="red"
     _socketList=None
     _flag = True
+    _password="videoHandle"
+    _neuralNetworkModelManager=None     #神经网络模型管理器
     def __new__(cls, *args, **kwargs):
         if cls._instant is None:
             cls._instant = super().__new__(cls)
@@ -67,13 +69,21 @@ class VideoHandler(object):
     外部接口开始处理视频,如果任务开始或已经正在进行则返回true,如果任务数量为0则返回false
     """
     def startHandleVideo(self):
+        if self._isWork:
+            return True
         if len(self._videoList)>0:
-            #判断任务是否正在进行，如果正在进行则返回true,如果没有进行，则再判断神经网络模型是否被占用
-            if not self._isWork:
-                #创建线程
-                t=threading.Thread(target=self._handleVideoList)
-                t.start()
-                self._isWork=True
+            # 获取神经网络模型
+            self._neuralNetworkModelManager = NeuralNetworkModelManager()
+            #尝试占用神经网络模型
+            flag=self._neuralNetworkModelManager.occupyModel(self._password)
+
+            #如果模型被占用，则返回false
+            if not flag:
+                return False
+            #创建线程
+            thread_handleVideoList = threading.Thread(target=self._handleVideoList)
+            thread_handleVideoList.start()
+            self._isWork=True
             return True
         else:
             return False
@@ -81,15 +91,7 @@ class VideoHandler(object):
     内部接口,循环处理视频队列里面的视频，该方法用多线程启用
     """
     def _handleVideoList(self):
-        #获取神经网络模型
-        neuralNetworkModel=NeuralNetworkModel()
-        model=neuralNetworkModel.getModel()
-        #判断神经网络是否被占用,如果被占用则返回
-        if model==None:
-            self._isWork=False
-            return
         while True:
-
             #如果任务列表已经为空，则退出线程
             if len(self._videoList)==0:
                 break
@@ -106,7 +108,7 @@ class VideoHandler(object):
             print("视频输出路径：{0}".format(outputPath))
             #开始处理视频
             self._process_video(
-                model,
+                self._neuralNetworkModelManager.getModel(self._password),
                 0.5,
                 inputPath,
                 outputPath,
@@ -121,7 +123,7 @@ class VideoHandler(object):
         #设置工作状态为False
         self._isWork=False
         #释放神经网络模型
-        neuralNetworkModel.releaseModel()
+        self._neuralNetworkModelManager.releaseModel(self._password)
     """
     内部接口,处理视频
     """

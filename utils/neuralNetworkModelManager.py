@@ -5,18 +5,29 @@ from detection import init_detector
 """
 该类用于获取神经网路模型，采用了单例模式，返回唯一的模型
 """
-class NeuralNetworkModel(object):
+class NeuralNetworkModelManager(object):
     _haveInitialModel=False #模型是否被初始化
     _model=None             #模型对象
-    _modelIsOccupied=False  #模型是否被占用
+    _isOccupied=False  #模型是否被占用
+    _password=None          #占用模型和释放模型使用的密码
+    _flag=True
+    _instant=None
+    def __new__(cls, *args, **kwargs):
+        if cls._instant is None:
+            cls._instant = super().__new__(cls)
+        return cls._instant
+    def __init__(self):
+        if not NeuralNetworkModelManager._flag:
+            return
+        NeuralNetworkModelManager._flag = False
     """
     获取神经网络模型
     """
-    def getModel(self):
-        #判断模型是否被占用，如果被占用则返回None
-        if self._modelIsOccupied:
+    def getModel(self,password):
+        #判断模型密码释放正确,模型是否被占用
+        if password is not self._password or not self._isOccupied :
             return None
-        self._modelIsOccupied=True
+        self._isOccupied=True
         if self._haveInitialModel:
             return self._model
         else:
@@ -24,11 +35,27 @@ class NeuralNetworkModel(object):
             args = self._getParse_args()
             _model = init_detector(args.config, args.checkpoints, device='cuda:0')
             return _model
+
     """
-    取消占用神经网络模型
+    占用神经网络,如果成功则返回True，否则返回False
     """
-    def releaseModel(self):
-        self._modelIsOccupied=False
+    def occupyModel(self,password):
+        if self._isOccupied:
+            return False
+        else:
+            self._password=password
+            self._isOccupied=True
+            return True
+    """
+    取消占用神经网络模型,成功则返回True，否则返回False
+    """
+    def releaseModel(self,password):
+        if self._password==password:
+            self._isOccupied = False
+            return True
+        else:
+            return False
+
     """
     获取神经网络模型的参数
     """

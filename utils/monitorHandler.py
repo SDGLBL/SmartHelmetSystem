@@ -14,7 +14,7 @@ from tqdm import tqdm
 import mmcv
 from utils import get_logger,Process
 from utils.loginFile import Login
-from utils.neuralNetworkModel import *
+from utils.neuralNetworkModelManager import *
 import  json
 from detection import init_detector
 
@@ -30,12 +30,15 @@ class MonitorHandler(object):
     _imageQueue_capture=queue.Queue(10000)        #摄像头将拍摄到的图片存入到该队列中
     _imageQueue_writeRtmp=queue.Queue(10000)       #存放待写成rtmp流的图片
     _Img_Q=queue.Queue(10000)               #存放待写成视频的图片
-
     _captureFps=None                #摄像头的帧数
     _resolution=None                        #摄像头分辨率
     _step=3                         #跳步数,默认为3
     _speed=0                        #处理速度
     _handleCount_peerSecond=0     #每秒钟处理的帧数，用于计算速度
+    _captureUrl=None
+    _rtmpUrl=None
+    _password="monitorHandler"
+    _neuralNetworkModel=None    #神经网络模型管理器
     def __new__(cls, *args, **kwargs):
         if cls._instant is None:
             cls._instant = super().__new__(cls)
@@ -44,6 +47,13 @@ class MonitorHandler(object):
         if not MonitorHandler._flag:
             return
         MonitorHandler._flag = False
+
+    """
+    设置摄像头url，和rtmpurl
+    """
+    def setUrl(self,captureUrl,rtmpUrl):
+        self._captureUrl=captureUrl
+        self._rtmpUrl=rtmpUrl
     """
     摄像头是否已经打开
     """
@@ -62,23 +72,28 @@ class MonitorHandler(object):
         #检测摄像头是否已经打开
         if self._isOpen:
             return True
-        #检测神经网络模型是否被占用
-        neuralNetworkModel=NeuralNetworkModel()
-        model=neuralNetworkModel.getModel()
-        #如果神经网络模型已经被占用，则返回False
-        if not model:
+        #检查是否设置了URL
+        if self._rtmpUrl is  None or self._captureUrl is  None:
             return False
-        monitorUrl="http://admin:admin@192.168.3.22:8081/"
-        rtsp = "rtsp://admin:admin@192.168.3.22:8554/live"
+        #获取神经网络模型管理器
+        self._neuralNetworkModel=NeuralNetworkModelManager()
+        #尝试占用神经网络模型
+        flag=self._neuralNetworkModel.occupyModel(self._password)
+        #如果神经网络模型已经被占用，则返回False
+        if not flag:
+            return False
         #创建摄像头对象
-        cap = cv2.VideoCapture(monitorUrl)
+        try:
+            cap = cv2.VideoCapture(self._captureUrl)
+        except:
+            return False
         if cap==None:
             return False
         width=int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height=int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps=cap.get(cv2.CAP_PROP_FPS)
-        rtmpUrl = "rtmp://192.168.3.28/live/livestream"
-        rtmpWriter=RtmpStreamWriter(width,height,fps,rtmpUrl)
+
+        rtmpWriter=RtmpStreamWriter(width,height,fps,self._rtmpUrl)
         # 获取摄像头的分辨率
         self._resolution = (width, height)
         print("摄像头分辨率：{0}".format(self._resolution))
@@ -87,7 +102,7 @@ class MonitorHandler(object):
         #创建照片捕捉线程
         thread_captrueImage=threading.Thread(target=self._openVideoCapture,args=(cap,))
         #创建视频流处理线程
-        thread_handleVideoStream=threading.Thread(target=self._handleVideoStream,args=(model,rtmpWriter,))
+        thread_handleVideoStream=threading.Thread(target=self._handleVideoStream,args=(rtmpWriter,))
         thread_captrueImage.start()
         thread_handleVideoStream.start()
         self._isOpen=True;
@@ -104,6 +119,8 @@ class MonitorHandler(object):
         while True:
             # 如果摄像头关闭，则退出
             if not self._isOpen:
+                #释放神经网络模型模型
+                self._neuralNetworkModel.releaseModel(self._password)
                 break
             #获取摄像头拍摄的图片
             ret, frame = cap.read()
@@ -111,6 +128,8 @@ class MonitorHandler(object):
             self._imageQueue_capture.put_nowait(frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 self._isOpen=False
+                # 释放神经网络模型模型
+                self._neuralNetworkModel.releaseModel(self._password)
                 break
         cap.release()
         cv2.destroyAllWindows()
@@ -119,7 +138,7 @@ class MonitorHandler(object):
     """
     内部接口,处理视频流(图片缓冲队列),多线程调用
     """
-    def _handleVideoStream(self, model, rtmpWriter, fourcc='avc1'):
+    def _handleVideoStream(self, rtmpWriter, fourcc='avc1'):
         dateStr=datetime.now().strftime("%Y-%m-%d")
         count=self.__getMonitorVideoCount_InOneDay(dateStr)
         relPath="./monitorVideo/{0}_{1}.mp4".format(dateStr,count)
@@ -138,7 +157,7 @@ class MonitorHandler(object):
             self._captureFps,
             self._resolution
         )
-        p = Process(model, self._step + 1)
+        p = Process(self._neuralNetworkModel.getModel(self._password), self._step + 1)
 
         #开启写视频线程
         thread_writeVideo = threading.Thread(target=self._write_frame, args=(vwriter, rtmpWriter,))
