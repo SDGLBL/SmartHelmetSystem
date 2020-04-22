@@ -8,6 +8,7 @@ from utils import get_logger
 from utils.loginFile import *
 from utils.queryFile import *
 from utils.insertFile import *
+from utils.videoHandler import VideoHandler
 from flask_socketio import SocketIO
 from geventwebsocket.handler import WebSocketHandler         #提供WS（websocket）协议处理
 from geventwebsocket.server import WSGIServer                #websocket服务承载
@@ -23,7 +24,7 @@ app = Flask(__name__,static_url_path="")
 #CORS(app, supports_credentials=True)
 app.secret_key='djf'
 socketio = SocketIO(app)
-
+socketList=[]
 #资源访
 sourcesHost= 'http://data.webbanc.xyz:8080'
 #sourcesHost='http://127.0.0.1:5000'
@@ -33,7 +34,7 @@ sourcesHost= 'http://data.webbanc.xyz:8080'
 
 @app.route('/',methods=['GET'])
 def hello_world():
-    return render_template('mainPage.html')
+    return render_template('videoPage.html')
 
 @app.route('/login')
 def toLogin():
@@ -50,11 +51,26 @@ def TestPost():
 @app.route("/uploadVideos",methods=['GET','POST'])
 def upload():
     if request.method=='POST':
+        print("用户上传视频")
         f = request.files["file"]
         base_path = path.abspath(path.dirname(__file__))
         upload_path = path.join(base_path,'static/uploads/')
-        file_name = upload_path + secure_filename(f.filename)
-        f.save(file_name)
+        fileName_noFormat=f.filename.split('.')[0]
+        count=getVideoCount_InOneDay_uploadsFile(fileName_noFormat)
+        print("同一天视频的数量：{0}".format(count))
+        fileName="{0}_{1}.mp4".format(fileName_noFormat,count)
+        absolutePath = upload_path + secure_filename(fileName)
+        f.save(absolutePath)
+        # for socket in socketList:
+        #     socket.send(json.dumps("用户上传视频"))
+        #client_socket = request.environ.get('wsgi.websocket')
+        #client_socket.send(json.dumps("用户上传视频"))
+        #创建视频处理对象
+        videoHandler=VideoHandler(socketList)
+        #将用户上传的视频加入到视频处理任务中
+        videoHandler.addVideo(fileName)
+        #开始视频处理
+        videoHandler.startHandleVideo()
         return redirect(url_for('upload'))
     else:
         return "失败"
@@ -62,22 +78,23 @@ def upload():
 @app.route('/connect',methods=['GET','POST'])
 def connectSocket():
     client_socket = request.environ.get('wsgi.websocket')
-    if not client_socket:
+
+    if client_socket is None:
         print("没有连接socket")
     else:
         print("连接socket成功")
-    #time.sleep(5)
-    print("准备通知前端更新")
-    client_socket.send(json.dumps("连接成功"))
+        socketList.append(client_socket)
+    client_socket.send(json.dumps({"abc":1}))
+    print("成功接收到socket请求，准备返回")
     return "ok"
 
 
 #返回视频、截图数据
 @app.route('/grabVideoData',methods=['GET','POST'])
 def getVideoData():
-    print("连接成功,准备回传视频数据"+request.method)
+    print("准备回传视频数据:")
     videoNames=getAllVideoName()
-    print(videoNames)
+
     videoInfos=[]
     #连接数据库
     mycolImageNumber = Login('data', 'imageNumber')
@@ -103,15 +120,16 @@ def getVideoData():
         videoInfos.append(videoInfom.__dict__)
 
         idx_video=idx_video+1
-    print("视频数据"+json.dumps(videoInfos))
+    print(json.dumps(videoInfos))
     return  json.dumps(videoInfos)
 #返回统计表格数据
 @app.route('/grabDiagramData',methods=['GET','POST'])
 def getDiagramData():
-
-    allDiagramData=getAllDiagramData()
+    print("准备回传统计数据")
+    #allDiagramData=getAllDiagramData()
+    allDiagramData=test()
     print(allDiagramData)
-    return json.dumps(getAllDiagramData())
+    return json.dumps(allDiagramData)
 
 
 
@@ -187,9 +205,27 @@ class DiagramData(object):
         self.data=date
         self.totalBreak=totalBreak
 
+"""
+
+"""
+def getVideoCount_InOneDay_uploadsFile(videoName_noFormat):
+    videoDir=os.path.abspath('./static/uploads/')
+    count=0
+    for root, dirs, files in os.walk(videoDir):
+        for file in files:
+            if file.split('_')[0]==videoName_noFormat:
+                count+=1
+    return count
+
+def test():
+    with open('./testData.json', 'r', encoding='utf8')as fp:
+        json_data = json.load(fp)
+        return json_data['diagramDatas']
+
+
 if __name__ == '__main__':
     # _thread.start_new_thread(hello, (), {})
-    Loger = get_logger()
-    Img_Q = queue.Queue(100)
+
+
     http_server = WSGIServer(('127.0.0.1', 5000), application=app, handler_class=WebSocketHandler)
     http_server.serve_forever()

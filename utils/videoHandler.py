@@ -2,7 +2,7 @@ import argparse
 import os.path as osp
 import os
 from datetime import *
-from time import *
+import time
 import cv2
 from cv2 import VideoWriter_fourcc
 import numpy as np
@@ -11,10 +11,9 @@ import threading
 from tqdm import tqdm
 import mmcv
 from utils import get_logger,Process
-
 from utils.loginFile import Login
 from utils.neuralNetworkModel import *
-
+import  json
 from detection import init_detector
 
 from tracker import Tracker,track,over_step_video,fill,draw_label,imgs_detection,img_detection,DetectionSifter
@@ -29,15 +28,17 @@ class VideoHandler(object):
     _outPutFps=30;
     _hatColor="green"
     _personColor="red"
-    flag = True
+    _socketList=None
+    _flag = True
     def __new__(cls, *args, **kwargs):
         if cls._instant is None:
             cls._instant = super().__new__(cls)
         return cls._instant
-    def __init__(self):
-        if not VideoHandler.flag:
+    def __init__(self,socketList):
+        if not VideoHandler._flag:
             return
-        VideoHandler.flag = False
+        self._socketList=socketList
+        VideoHandler._flag = False
     """
     该方法为添加一个任务到任务列表里面
     """
@@ -96,7 +97,7 @@ class VideoHandler(object):
             videoName=self._videoList[0]
             #视频的输入路径
             inputPath=os.path.abspath('./static/uploads/'+videoName)
-            videoName_noFormat=videoName.split('.')[0]
+            videoName_noFormat=videoName.split('_')[0]
             #获取数据库中与该视频是同一天视频的数量
             videoCount_InOneDay=self._getVideoCount_InOneDay(videoName_noFormat)
             #视频的输出路径
@@ -115,6 +116,8 @@ class VideoHandler(object):
                 )
             #将完成的任务删除
             self._videoList.pop(0)
+            #for socket in self._socketList:
+            #    socket.send(json.dumps("更新数据"))
         #设置工作状态为False
         self._isWork=False
         #释放神经网络模型
@@ -186,6 +189,7 @@ class VideoHandler(object):
             #
             frames_index = [start_index, start_index + step]
             origin_frames, psn_objects, hat_objects = p.get_img(origin_frames, frames_index)
+
             for psn_o in psn_objects:
                 ds.add_object(*psn_o)
             Img_Q.put(origin_frames[:-1])
@@ -198,11 +202,11 @@ class VideoHandler(object):
     内部接口,获取数据库中，某天的视频的数量
     """
     def _getVideoCount_InOneDay(self,videoName_noFormat):
-        videoDir=os.path.abspath('../static/video/')
+        videoDir=os.path.abspath('./static/video/')
         count=0
         for root, dirs, files in os.walk(videoDir):
             for file in files:
-                if file.split('.')[0]==videoName_noFormat:
+                if file.split('_')[0]==videoName_noFormat:
                     count+=1
         return count
     """
@@ -212,7 +216,7 @@ class VideoHandler(object):
         count =0
         while True:
             try:
-                imgs = Img_Q.get(timeout=5)
+                imgs = Img_Q.get(timeout=3)
                 for img in imgs:
                     count+=1
                     vwriter.write(img)

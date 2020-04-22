@@ -22,6 +22,7 @@ var/
 wheels/
 test.py
 testMongodb.py
+*.json
 *.egg-info/
 .installed.cfg
 *.egg

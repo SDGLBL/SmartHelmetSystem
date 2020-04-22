@@ -370,7 +370,7 @@ class DetectionSifter(object):
                             'time':detec_object['img_save_time'][0],
                             'info':{
                             # 图像二进制数据，需要用pick
-                            'img':sp,
+                            'img':self.video_name+str(id_num)+'.jpg',
                             'img_shape':detec_object['img'].shape,
                             'video_name':self.video_name,
                             'video_time':detec_object['img_save_time'][1]
