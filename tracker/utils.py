@@ -14,6 +14,7 @@ import os.path as osp
 import os
 import asyncio
 import threading
+from utils import get_logger
 
 def img_detection(img, model,thre):
     result = inference_detector(model,img)
@@ -245,7 +246,6 @@ def over_step_video(video,step=1):
         yield data
 
 
-
 class DetectionSifter(object):
     def __init__(
         self,
@@ -255,7 +255,9 @@ class DetectionSifter(object):
         connection,
         alive_thr=1,
         dead_thr=3,
-        img_save_p='./static/pic'):
+        img_save_p='./static/pic',
+        check_time=15):
+        
         assert isinstance(fps,int)
         assert isinstance(video_name,str)
         assert isinstance(alive_thr,(int,float))
@@ -283,9 +285,10 @@ class DetectionSifter(object):
         self.img_save_p = img_save_p
         if not osp.exists(self.img_save_p):
             os.mkdir(self.img_save_p)
-        self.check_thread = threading.Thread(target=self._check_all_object)
+        self.check_thread = threading.Thread(target=self._check,args=(check_time,))
         self.check_thread.start()
         self.check_thread_break_point = False
+
 
     def add_object(self,bboxs,img,index):
         assert isinstance(bboxs,np.ndarray),'bbox is type is {0}'.format(type(bboxs))
@@ -351,10 +354,10 @@ class DetectionSifter(object):
             (self.center[0] - bbox_center[0])**2 + (self.center[1] - bbox_center[1])**2
         )
 
-    def _check(self):    
+    def _check(self,check_time):
         while True:
             self._check_all_object()
-            time.sleep(15)
+            time.sleep(check_time)
             if self.check_thread_break_point:
                 break
             

@@ -126,7 +126,6 @@ if __name__ == "__main__":
     if args.i is None:
         raise ValueError('input_path can not be None')
     model = init_detector(args.config, args.checkpoints, device='cuda:0')
-    Loger = get_logger()
     Img_Q = queue.Queue(100)
     process_video(
         model,
