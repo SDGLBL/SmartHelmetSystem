@@ -13,6 +13,7 @@ import pickle
 import os.path as osp
 import os
 import asyncio
+import threading
 
 def img_detection(img, model,thre):
     result = inference_detector(model,img)
@@ -282,6 +283,10 @@ class DetectionSifter(object):
         self.img_save_p = img_save_p
         if not osp.exists(self.img_save_p):
             os.mkdir(self.img_save_p)
+        self.check_thread = threading.Thread(target=self._check_all_object)
+        self.check_thread.start()
+        self.check_thread_break_point = False
+
     def add_object(self,bboxs,img,index):
         assert isinstance(bboxs,np.ndarray),'bbox is type is {0}'.format(type(bboxs))
         assert bboxs.shape[1] == 5
@@ -329,9 +334,9 @@ class DetectionSifter(object):
                     # 刷新最佳图像保存时间
                     x['img_save_time'] = (self._get_time(),self.process_step / self.fps)
         
-        # 每隔三秒钟检测整个缓冲区，看是否需要保存或者清除一些object
-        if (self.process_step / self.fps) % 3 == 0:
-            self._check_all_object()
+        # # 每隔三秒钟检测整个缓冲区，看是否需要保存或者清除一些object
+        # if (self.process_step / self.fps) % 3 == 0:
+        #     self._check_all_object()
     
     def _get_alive_time(self,detec_object):
         # 计算指定的object存活时间
@@ -346,6 +351,13 @@ class DetectionSifter(object):
             (self.center[0] - bbox_center[0])**2 + (self.center[1] - bbox_center[1])**2
         )
 
+    def _check(self):    
+        while True:
+            self._check_all_object()
+            time.sleep(15)
+            if self.check_thread_break_point:
+                break
+            
     def _check_all_object(self,is_last = False):
         if is_last:
             self.dead_thr = 0
@@ -414,4 +426,5 @@ class DetectionSifter(object):
 
     def clear(self):
         # 清理剩余的数据
+        self.check_thread_break_point = True
         self._check_all_object(True)
