@@ -13,7 +13,7 @@ import queue
 import threading
 import numpy as np
 import os.path as osp
-from utils import get_logger,Process
+from utils import get_logger,ImageHandleProcess
 from db import get_collection
 from cv2 import VideoWriter_fourcc
 from pymongo import MongoClient
@@ -103,7 +103,7 @@ def process_video(
 
     indexs = np.arange(vlen)[0:len(video):step]
     # 每次取step张图像，比如第一次取[0:3]第二次则取[2:5]确保探测一张跳过step-1张,相当于探测一张相当于探测step张
-    p = Process(model,step+1)
+    p = ImageHandleProcess(model, step + 1)
     for start_index in tqdm(indexs):
         end_index = start_index + step + 1
         if end_index >= vlen:

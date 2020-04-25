@@ -10,7 +10,7 @@ import queue
 import threading
 from tqdm import tqdm
 import mmcv
-from utils import get_logger,Process
+from utils import get_logger,ImageHandleProcess
 from utils.loginFile import Login
 from utils.neuralNetworkModelManager import *
 import  json
@@ -148,7 +148,7 @@ class VideoHandler(object):
             hat_color {[str]} -- [安全帽框颜色]
             person_color {[str]} -- [人头框颜色]
         """
-        startTime = datetime.now()
+
         #创建图像缓冲队列
         Img_Q = queue.Queue(100)
         video = mmcv.VideoReader(input_path, cache_capacity=40)
@@ -181,7 +181,10 @@ class VideoHandler(object):
 
         indexs = np.arange(vlen)[0:len(video):step]
         # 每次取step张图像，比如第一次取[0:3]第二次则取[2:5]确保探测一张跳过step-1张,相当于探测一张相当于探测step张
-        p = Process(model, step + 1)
+        p = ImageHandleProcess(model, step + 1)
+
+        count=0
+        myTime=datetime.now()
         for start_index in tqdm(indexs):
             end_index = start_index + step + 1
             if end_index >= vlen:
@@ -190,16 +193,23 @@ class VideoHandler(object):
             origin_frames = np.array(origin_frames)
             #
             frames_index = [start_index, start_index + step]
+            startTime=datetime.now()
             origin_frames, psn_objects, hat_objects = p.get_img(origin_frames, frames_index)
-
+            endTime=datetime.now()
+            #print("开始时间:{0},结束时间：{1}".format(startTime, endTime))
+            count+=2
+            if (count >= 30):
+                print("耗时：{0}".format((datetime.now() - myTime)))
+                # print("计算{0}张图片,开始时间：{1},结束时间{2}".format(self._handleCount_peerSecond,myTime,datetime.now()))
+                myTime = datetime.now()
+                count = 0
             for psn_o in psn_objects:
                 ds.add_object(*psn_o)
             Img_Q.put(origin_frames[:-1])
         ds.clear()
         print('process finshed')
-        endTime=datetime.now()
-        print("开始时间:{0},结束时间:{1}".format(startTime,endTime))
-        print("总共耗时：{0}".format((endTime-startTime).seconds))
+
+
     """
     内部接口,获取数据库中，某天的视频的数量
     """

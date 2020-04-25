@@ -2,7 +2,7 @@ from mmcv import VideoReader,color_val
 from tracker import Tracker,img_detection,track,fill,draw_label1,DetectionSifter
 import numpy as np
 import copy
-class Process(object):
+class ImageHandleProcess(object):
     def __init__(
         self,
         model,

@@ -6,13 +6,14 @@ import time
 import cv2
 from cv2 import VideoWriter_fourcc
 from utils.rtmpWriter import RtmpStreamWriter
+from multiprocessing import Process,Pipe
 import subprocess as sp
 import numpy as np
 import queue
 import threading
 from tqdm import tqdm
 import mmcv
-from utils import get_logger,Process
+from utils import get_logger,ImageHandleProcess
 from utils.loginFile import Login
 from utils.neuralNetworkModelManager import *
 import  json
@@ -20,6 +21,9 @@ from detection import init_detector
 
 from tracker import Tracker,track,over_step_video,fill,draw_label,imgs_detection,img_detection,DetectionSifter
 
+
+def test():
+    print("创建进程")
 """
 监控管理器，采用单例模式，该类用于操控监控摄像头，并且将摄像头拍摄的内容进行计算，存储到数据，发送给前端显示
 """
@@ -39,6 +43,8 @@ class MonitorHandler(object):
     _rtmpUrl=None
     _password="monitorHandler"
     _neuralNetworkModel=None    #神经网络模型管理器
+    _pipeReader=None
+    _pipeWriter=None
     def __new__(cls, *args, **kwargs):
         if cls._instant is None:
             cls._instant = super().__new__(cls)
@@ -100,13 +106,23 @@ class MonitorHandler(object):
         #获取摄像头的帧数
         self._captureFps=(fps)
         #创建照片捕捉线程
-        thread_captrueImage=threading.Thread(target=self._openVideoCapture,args=(cap,))
+
+        self._pipeReader, self._pipeWriter = Pipe(True)
+        thread_captrueImage = threading.Thread(target=self._openVideoCapture, args=(cap,))
+        #process_captureImage = Process(target=self._openVideoCapture,args=(cap,self._pipeWriter,))
+
         #创建视频流处理线程
         thread_handleVideoStream=threading.Thread(target=self._handleVideoStream,args=(rtmpWriter,))
         thread_captrueImage.start()
+        #process_captureImage.start()
+        #print("进程ＩＤ：{0}".format(process_captureImage.pid))
         thread_handleVideoStream.start()
         self._isOpen=True;
         return True
+
+
+
+
 
     """
     内部接口，打开摄像头,录制视频,将拍摄的视频以图片的形式存入图片缓冲队列里面,多线程调用
@@ -118,14 +134,15 @@ class MonitorHandler(object):
         captureFps=cap.get(cv2.CAP_PROP_FPS)
         while True:
             # 如果摄像头关闭，则退出
-            if not self._isOpen:
-                #释放神经网络模型模型
-                self._neuralNetworkModel.releaseModel(self._password)
-                break
+            # if not self._isOpen:
+            #     #释放神经网络模型模型
+            #     self._neuralNetworkModel.releaseModel(self._password)
+            #     break
             #获取摄像头拍摄的图片
             ret, frame = cap.read()
             cv2.imshow("djf", frame)
             self._imageQueue_capture.put_nowait(frame)
+            #pipeWriter.send(frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 self._isOpen=False
                 # 释放神经网络模型模型
@@ -157,7 +174,7 @@ class MonitorHandler(object):
             self._captureFps,
             self._resolution
         )
-        p = Process(self._neuralNetworkModel.getModel(self._password), self._step + 1)
+        p = ImageHandleProcess(self._neuralNetworkModel.getModel(self._password), self._step + 1)
 
         #开启写视频线程
         thread_writeVideo = threading.Thread(target=self._write_frame, args=(vwriter, rtmpWriter,))
@@ -168,6 +185,7 @@ class MonitorHandler(object):
 
         startImg=None
         startIndex=0
+        myTime=datetime.now()
         #开始循环处理视频流
         while True:
             frameList=[]
@@ -178,26 +196,30 @@ class MonitorHandler(object):
             #根据跳步数目，创建图片列表
             while len(frameList) != nowStep+1:
                 try:
-                    frameList.append(self._imageQueue_capture.get(timeout=3))
+                    frameList.append(self._pipeReader.recv())
+                    #frameList.append(self._imageQueue_capture.get(timeout=3))
                 except:
                     #检查摄像头是否已经关闭，如果关闭了，则退出线程
                     if not self._isOpen:
                         return
             startImg=frameList[-1]
             origin_frames = np.array(frameList)
-
             #
             frames_index = [startIndex, startIndex+nowStep]
             startIndex=startIndex+nowStep
             startTime=datetime.now()
             origin_frames, psn_objects, hat_objects = p.get_img(origin_frames, frames_index)
-
             endTime=datetime.now()
             #print("开始时间:{0},结束时间：{1}".format(startTime,endTime))
             for psn_o in psn_objects:
                 ds.add_object(*psn_o)
             self._Img_Q.put(origin_frames[:-1])
             self._handleCount_peerSecond+=nowStep
+            if(self._handleCount_peerSecond>=30):
+                print("耗时：{0}".format((datetime.now()-myTime)))
+                #print("计算{0}张图片,开始时间：{1},结束时间{2}".format(self._handleCount_peerSecond,myTime,datetime.now()))
+                myTime=datetime.now()
+                self._handleCount_peerSecond=0
         ds.clear()
 
     """
@@ -235,7 +257,11 @@ class MonitorHandler(object):
     """
     def _calculateHandleSpeed(self):
         while self._isOpen:
+            #print("睡前：{0}".format(datetime.now()))
             time.sleep(1)
-            self._speed=self._handleCount_peerSecond;
-            self._handleCount_peerSecond=0
+            #print("睡后：{0}".format(datetime.now()))
+            #print("数量：{0}".format(self._handleCount_peerSecond))
+            #self._speed=self._handleCount_peerSecond;
+            #self._handleCount_peerSecond=0
             #print("当前处理速度为{0}".format(self._speed))
+
