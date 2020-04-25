@@ -22,9 +22,10 @@ from mmcv.visualization import color_val
 from detection.mmdet.apis import init_detector, inference_detector, show_result_pyplot,get_result
 from utils.loginFile import Login
 from utils.async_cv import VideoCaptureAsync
+from multiprocessing import Process,Pipe
 
-READ_IMG_Q = queue.Queue(maxsize=1000000)
-SHOW_IMG_Q = queue.Queue(maxsize=1000000)
+
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -33,25 +34,52 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def read_img(fps=30):
+def conn_send(conn,imgs):
+    conn.send(imgs)
+
+def read_img(conn,fps=30):
     try:
         try:
             cap = VideoCaptureAsync(0)
         except:
             print("开启摄像头失败")
-        cap.set(6, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
+        # cap.set(6, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
         cap.start()
         sleep_time = 1/fps
+        s = time.time()
+        i = 1
+        save_list = []
         while True:
+            if len(save_list) == 30:
+                # threading.Thread(target=conn_send,args=(conn,save_list)).start()
+                conn.send(save_list)
+                save_list = []
             _, img = cap.read()
-            READ_IMG_Q.put(img)
+            print("读取{}张图像耗时{}".format(i,time.time()-s))
+            i+=1
+            save_list.append(img)
             time.sleep(sleep_time)
-            print("len of read q {0}".format(READ_IMG_Q.qsize()))
+            
     except KeyboardInterrupt:
         cap.stop()
         return
 
-def process_img(step = 6):
+
+
+SHOW_IMG_Q = queue.Queue(maxsize=1000000)
+READ_IMG_Q = queue.Queue(maxsize=1000000)
+
+def pipline_read_img(conn,READ_IMG_Q):
+    try:
+        while True:
+            imgs = conn.recv()
+            for img in imgs:
+                READ_IMG_Q.put(img)
+    except KeyboardInterrupt:
+        return
+
+
+def process_img(step = 5):
     try:
         model = init_detector(args.config, args.checkpoints, device='cuda')
         LAST_IMG = READ_IMG_Q.get()
@@ -72,7 +100,7 @@ def process_img(step = 6):
             origin_frames, psn_objects, hat_objects = p.get_img(IMG_LIST, frames_index)
             for frame in origin_frames[:-1]:
                 SHOW_IMG_Q.put(frame)
-                print("len of show q {0}".format(SHOW_IMG_Q.qsize()))
+                #print("len of show q {0}".format(SHOW_IMG_Q.qsize()))
     except KeyboardInterrupt:
         return
 
@@ -92,10 +120,13 @@ def show_img():
 
 if __name__ == '__main__':
     args = parse_args()
-    read = threading.Thread(target=read_img)
+    parent_conn, child_conn = Pipe()
+    read = Process(target=read_img,args=(child_conn,))
+    pipline_read = threading.Thread(target=pipline_read_img,args=(parent_conn,READ_IMG_Q))
     process = threading.Thread(target=process_img)
     show = threading.Thread(target=show_img)
     read.start()
+    pipline_read.start()
     process.start()
     show.start()
 
