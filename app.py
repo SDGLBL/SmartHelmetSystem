@@ -84,17 +84,21 @@ def connectSocket():
     else:
         print("连接socket成功")
         socketList.append(client_socket)
-    client_socket.send(json.dumps({"abc":1}))
+    #client_socket.send(json.dumps({"abc":1}))
     print("成功接收到socket请求，准备返回")
     return "ok"
 
+@app.route('/graRtmpVideoData',methods=['GET','POST'])
+def getRtmpUrl():
+    print("准备回传rtmpUrl地址")
+    #return"rtmp://124.139.232.61:1935/live/livestream"
+    return "rtmp://192.168.42.153:1935/live/abcd"
 
 #返回视频、截图数据
 @app.route('/grabVideoData',methods=['GET','POST'])
 def getVideoData():
     print("准备回传视频数据:")
     videoNames=getAllVideoName()
-
     videoInfos=[]
     #连接数据库
     mycolImageNumber = Login('data', 'imageNumber')
