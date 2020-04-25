@@ -37,7 +37,7 @@ def parse_args():
 def conn_send(conn,imgs):
     conn.send(imgs)
 
-def read_img(conn,fps=30):
+def read_img(conn,fps=31):
     try:
         try:
             cap = VideoCaptureAsync(0)
@@ -50,16 +50,16 @@ def read_img(conn,fps=30):
         i = 1
         save_list = []
         while True:
-            if len(save_list) == 30:
-                # threading.Thread(target=conn_send,args=(conn,save_list)).start()
+            if len(save_list) == 3:
                 conn.send(save_list)
                 save_list = []
             _, img = cap.read()
-            print("读取{}张图像耗时{}".format(i,time.time()-s))
             i+=1
             save_list.append(img)
-            time.sleep(sleep_time)
-            
+            cv2.imshow("read_before",img)
+            cv2.waitKey(int(sleep_time*1000-30))
+            #time.sleep(sleep_time)
+    
     except KeyboardInterrupt:
         cap.stop()
         return
@@ -72,14 +72,16 @@ READ_IMG_Q = queue.Queue(maxsize=1000000)
 def pipline_read_img(conn,READ_IMG_Q):
     try:
         while True:
+            #print('开始接受时间{}',format(time.time()-start))
             imgs = conn.recv()
+            #print('结束接受时间{}',format(time.time()-start))
             for img in imgs:
                 READ_IMG_Q.put(img)
     except KeyboardInterrupt:
         return
 
 
-def process_img(step = 5):
+def process_img(step = 6):
     try:
         model = init_detector(args.config, args.checkpoints, device='cuda')
         LAST_IMG = READ_IMG_Q.get()
@@ -107,10 +109,14 @@ def process_img(step = 5):
 
 def show_img():
     try:
+        s = time.time()
+        i = 1
         while True:
             img = SHOW_IMG_Q.get()
-            cv2.imshow("test",img)
-            cv2.waitKey(1)
+            cv2.imshow("read_after",img)
+            i+=1
+            print("读取{}张图像耗时{}".format(i,time.time()-s))
+            cv2.waitKey(10)
     except KeyboardInterrupt:
         return
 
@@ -119,6 +125,7 @@ def show_img():
 
 
 if __name__ == '__main__':
+    start = time.time()
     args = parse_args()
     parent_conn, child_conn = Pipe()
     read = Process(target=read_img,args=(child_conn,))
